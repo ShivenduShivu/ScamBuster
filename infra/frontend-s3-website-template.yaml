@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  ScamBuster interim static website hosting - uses a public S3 website endpoint
+  until private CloudFront hosting is available
+
+Metadata:
+  'com.aws.cloudformation.Context':
+    arch: browser -> public S3 website endpoint
+    must:
+      - public policy grants GetObject only
+      - bucket never stores messages, screenshots, credentials, or private data
+      - replace with private S3 + CloudFront OAC after account verification
+    ref:
+      - at: ../README.md
+        has: architecture, interim endpoint, and HTTPS upgrade status
+        scope: repository
+
+Resources:
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      'com.aws.cloudformation.Context':
+        why: temporary no-build frontend origin; public website mode is required because CloudFront creation is account-blocked
+        must:
+          - contain public frontend assets only
+          - keep object ownership enforced so access is policy-based rather than ACL-based
+        mutable: change-with-constraints
+        gaps:
+          - S3 website endpoints provide HTTP only; CloudFront migration restores HTTPS and private origin access
+    Properties:
+      BucketName: !Sub scambuster-site-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      VersioningConfiguration:
+        Status: Enabled
+      WebsiteConfiguration:
+        ErrorDocument: index.html
+        IndexDocument: index.html
+
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Metadata:
+      'com.aws.cloudformation.Context':
+        why: exposes only site object reads required by anonymous website visitors; no list or write access
+        must:
+          - allow only s3:GetObject on WebsiteBucket objects
+          - remove with this interim stack after CloudFront migration
+        mutable: review-required
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadForWebsite
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub ${WebsiteBucket.Arn}/*
+
+Outputs:
+  WebsiteUrl:
+    Description: Public HTTP endpoint for the interim ScamBuster website.
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+  SiteBucketName:
+    Description: S3 bucket containing the interim frontend assets.
+    Value: !Ref WebsiteBucket
