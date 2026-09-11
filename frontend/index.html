@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Check suspicious messages and screenshots for scam warning signs.">
+    <title>ScamBuster — Check suspicious messages</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#checker">Skip to message checker</a>
+
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href="/" aria-label="ScamBuster home">
+          <span class="brand-mark" aria-hidden="true">SB</span>
+          <span>ScamBuster</span>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero shell" aria-labelledby="page-title">
+        <p class="eyebrow">A second opinion before you act</p>
+        <h1 id="page-title">Paste a suspicious message.<br>Know in seconds.</h1>
+        <p class="hero-copy">Analyze texts, WhatsApp or email screenshots, job offers, delivery alerts, and payment messages for signs of a scam.</p>
+      </section>
+
+      <section id="checker" class="checker shell" aria-label="Check a suspicious message">
+        <form id="analysis-form" class="input-card" novalidate>
+          <div class="field-heading">
+            <div>
+              <p class="step-label">Message</p>
+              <label for="message-text">Paste the suspicious message here</label>
+            </div>
+            <span id="character-count" class="character-count">0 / 10,000</span>
+          </div>
+          <textarea id="message-text" name="message" maxlength="10000" rows="8" placeholder="For example: Your toll payment is overdue. Pay now to avoid a penalty…"></textarea>
+
+          <div class="separator" aria-hidden="true"><span>or add a screenshot</span></div>
+
+          <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-describedby="upload-help">
+            <input id="image-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp">
+            <div class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/>
+              </svg>
+            </div>
+            <p><span class="upload-link">Choose a screenshot</span> or drag it here</p>
+            <p id="upload-help" class="upload-help">PNG, JPEG, or WebP. You can also paste an image from your clipboard.</p>
+          </div>
+
+          <div id="image-preview" class="image-preview" hidden>
+            <img id="preview-image" alt="Selected screenshot preview">
+            <div class="preview-copy">
+              <strong id="preview-name"></strong>
+              <span id="preview-details"></span>
+            </div>
+            <button id="remove-image" class="remove-button" type="button" aria-label="Remove selected screenshot">Remove</button>
+          </div>
+
+          <p id="form-error" class="inline-error" role="alert" hidden></p>
+
+          <button id="submit-button" class="primary-button" type="submit" disabled>
+            <span id="button-label">Check this message</span>
+            <span class="button-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+          <p id="loading-status" class="loading-status" role="status" aria-live="polite" hidden></p>
+        </form>
+      </section>
+
+      <section id="result-region" class="result-region shell" aria-live="polite" aria-atomic="true" hidden>
+        <article id="result-card" class="result-card">
+          <div id="result-content"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-grid">
+        <div>
+          <strong>Stay cautious, stay in control.</strong>
+          <p>AI-powered analysis — use judgment for financial decisions. When in doubt, contact the organization through its official app or website.</p>
+        </div>
+        <div>
+          <strong>Privacy by design</strong>
+          <p>Your message is analyzed and immediately discarded — we never store message content.</p>
+        </div>
+        <div>
+          <strong>Report fraud</strong>
+          <p><a href="https://reportfraud.ftc.gov/" target="_blank" rel="noopener noreferrer">United States — FTC</a><br><a href="https://cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">India — Cyber Crime Portal</a></p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
