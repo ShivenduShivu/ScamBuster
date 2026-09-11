@@ -5,10 +5,12 @@ ScamBuster is a web application that analyzes suspicious messages and screenshot
 ## Architecture
 
 ```text
-Frontend -> API Gateway HTTP API -> Lambda -> Amazon Bedrock
-                                         `-> DynamoDB
+User -> CloudFront -> S3 (static site)
+User -> API Gateway -> Lambda -> Bedrock Nova + DynamoDB
 ```
 
-The API accepts suspicious message text or screenshots. Lambda validates the request, invokes Amazon Bedrock for analysis, and writes only anonymized verdict metadata to DynamoDB.
+The browser application is stored in a private S3 bucket and served through CloudFront. The API accepts suspicious message text or screenshots; Lambda validates the request, invokes Amazon Bedrock for analysis, and writes only anonymized verdict metadata to DynamoDB.
+
+Live site: pending CloudFront account verification.
 
 Status: in development

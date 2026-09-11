@@ -4,8 +4,6 @@ Description: >-
   anonymized verdict metadata
 
 Metadata:
-  AWSToolsMetrics:
-    AWSAgentToolkit: aws-cloudformation@2
   'com.aws.cloudformation.Context':
     arch: HTTP API -> Lambda -> Bedrock + DynamoDB
     must:
