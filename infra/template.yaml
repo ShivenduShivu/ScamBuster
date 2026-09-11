@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  ScamBuster analysis API — uses on-demand serverless services and stores only
+  anonymized verdict metadata
+
+Metadata:
+  AWSToolsMetrics:
+    AWSAgentToolkit: aws-cloudformation@2
+  'com.aws.cloudformation.Context':
+    arch: HTTP API -> Lambda -> Bedrock + DynamoDB
+    must:
+      - never persist message text, image bytes, or user identifiers
+      - ANALYSIS_MODE=mock only by explicit configuration
+    ref:
+      - at: ../README.md
+        has: architecture overview
+        scope: repository
+
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  AnalysisMode:
+    Type: String
+    Default: bedrock
+    AllowedValues:
+      - bedrock
+      - mock
+    Description: Selects live Bedrock analysis or deterministic demo responses.
+  BedrockModelId:
+    Type: String
+    Default: amazon.nova-2-lite-v1:0
+    AllowedPattern: '^[A-Za-z0-9._:-]+$'
+    Description: Bedrock foundation model or inference profile identifier.
+
+Resources:
+  ChecksTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      'com.aws.cloudformation.Context':
+        why: stores anonymous analysis outcomes for product telemetry; on-demand for bursty early traffic
+        must:
+          - id remains the partition key
+          - never add raw input or user identity attributes
+        mutable: change-with-constraints
+    Properties:
+      TableName: ScamBusterChecks
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AWS::StackName}-analyzer
+      RetentionInDays: 14
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      'com.aws.cloudformation.Context':
+        why: grants only runtime logging, one-table writes, and model invocation
+        must:
+          - DynamoDB access stays PutItem-only on ChecksTable
+          - review Bedrock wildcard after model authorization stabilizes
+        mutable: review-required
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ScamBusterRuntimeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: WriteAnonymizedChecks
+                Effect: Allow
+                Action: dynamodb:PutItem
+                Resource: !GetAtt ChecksTable.Arn
+              - Sid: InvokeBedrockModels
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:Converse
+                Resource: '*'
+              - Sid: WriteFunctionLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub ${FunctionLogGroup.Arn}:*
+
+  AnalyzerFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - FunctionLogGroup
+    Metadata:
+      'com.aws.cloudformation.Context':
+        why: validates synchronous browser requests and runs scam analysis; mock mode keeps demos live during model authorization
+        must:
+          - timeout <= HTTP API 30s integration limit
+          - mock mode never activates as an error fallback
+        mutable: change-with-constraints
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-analyzer
+      CodeUri: ../backend/
+      Handler: handler.lambda_handler
+      Runtime: python3.12
+      MemorySize: 512
+      Timeout: 30
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          ANALYSIS_MODE: !Ref AnalysisMode
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          TABLE_NAME: !Ref ChecksTable
+      Events:
+        Analyze:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ScamBusterApi
+            Path: /analyze
+            Method: POST
+            PayloadFormatVersion: '2.0'
+
+  ScamBusterApi:
+    Type: AWS::Serverless::HttpApi
+    Metadata:
+      'com.aws.cloudformation.Context':
+        why: public browser-facing analysis endpoint; HTTP API chosen for low fixed complexity and pay-per-request pricing
+        must:
+          - keep POST /analyze proxy integration
+          - keep CORS aligned with Lambda responses
+        mutable: change-with-constraints
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - content-type
+
+Outputs:
+  ApiEndpoint:
+    Description: Base URL for the ScamBuster HTTP API.
+    Value: !Sub https://${ScamBusterApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+  TableName:
+    Description: DynamoDB table containing anonymized analysis metadata.
+    Value: !Ref ChecksTable

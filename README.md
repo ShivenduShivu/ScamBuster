@@ -4,6 +4,11 @@ ScamBuster is a web application that analyzes suspicious messages and screenshot
 
 ## Architecture
 
-Architecture details will be added in a later stage.
+```text
+Frontend -> API Gateway HTTP API -> Lambda -> Amazon Bedrock
+                                         `-> DynamoDB
+```
+
+The API accepts suspicious message text or screenshots. Lambda validates the request, invokes Amazon Bedrock for analysis, and writes only anonymized verdict metadata to DynamoDB.
 
 Status: in development

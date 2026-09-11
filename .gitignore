@@ -35,6 +35,7 @@ credentials.*
 *.zip
 .aws-sam/
 .aws/
+infra/packaged.yaml
 
 # Operating systems
 .DS_Store
