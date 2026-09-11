@@ -1,0 +1,40 @@
+# Python
+.venv/
+venv/
+env/
+*.py[cod]
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+credentials
+credentials.*
+*credentials*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.tfstate
+*.tfstate.*
+
+# Build and tooling
+*.zip
+.aws-sam/
+.aws/
+
+# Operating systems
+.DS_Store
