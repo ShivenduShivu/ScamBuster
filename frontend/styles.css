@@ -84,6 +84,7 @@ a {
   display: flex;
   min-height: 4.5rem;
   align-items: center;
+  justify-content: space-between;
 }
 
 .brand {
@@ -108,6 +109,18 @@ a {
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+}
+
+.demo-mode-pill {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid #e3c878;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: #684000;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .hero {
@@ -197,6 +210,43 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(11, 119, 160, 0.15);
 }
 
+.examples {
+  margin-top: 0.9rem;
+}
+
+.examples-label {
+  display: block;
+  margin-bottom: 0.55rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.example-chip {
+  min-height: 2.15rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid #b9c8d5;
+  border-radius: 999px;
+  background: #f8fbfc;
+  color: var(--accent-dark);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.example-chip:hover {
+  border-color: var(--accent);
+  background: #eaf5f8;
+  transform: translateY(-1px);
+}
+
 .separator {
   display: flex;
   align-items: center;
@@ -238,6 +288,7 @@ textarea:focus {
 .drop-zone:focus-visible,
 .primary-button:focus-visible,
 .remove-button:focus-visible,
+.example-chip:focus-visible,
 a:focus-visible {
   outline: 3px solid rgba(11, 119, 160, 0.35);
   outline-offset: 3px;

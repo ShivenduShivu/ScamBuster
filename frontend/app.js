@@ -9,9 +9,17 @@ const LOADING_MESSAGES = [
   "Checking scam patterns…",
   "Almost done…",
 ];
+const EXAMPLE_MESSAGES = Object.freeze({
+  toll: "FINAL NOTICE: Your FASTag toll fine of ₹580 is unpaid. Pay within 30 minutes at https://fastag-clearance.example or your vehicle registration will be suspended.",
+  job: "Congratulations! You have been selected for a remote data-entry position earning ₹45,000 per month. To receive your appointment letter, pay a refundable ₹1,499 registration and training fee by UPI today.",
+  delivery: "Delivery update: Your parcel is being held at customs. Pay the ₹72 clearance fee now at https://parcel-release.example to prevent the shipment from being returned.",
+  otp: "Your bank OTP is 482731 for a card purchase of ₹1,250. It is valid for 5 minutes. Do not share this code with anyone. If you did not request this purchase, call the number on the back of your card.",
+});
 
 const form = document.querySelector("#analysis-form");
+const demoModePill = document.querySelector("#demo-mode-pill");
 const textInput = document.querySelector("#message-text");
+const exampleChips = document.querySelectorAll(".example-chip");
 const characterCount = document.querySelector("#character-count");
 const imageInput = document.querySelector("#image-input");
 const dropZone = document.querySelector("#drop-zone");
@@ -236,6 +244,7 @@ function createResultSection(title) {
 
 function renderResult(result) {
   const presentation = verdictPresentation(result.verdict);
+  demoModePill.hidden = result.demo_mode !== true;
   resultCard.className = `result-card ${presentation.theme}`;
   resultContent.replaceChildren();
 
@@ -359,6 +368,16 @@ async function submitAnalysis(event) {
 }
 
 textInput.addEventListener("input", updateCharacterCount);
+exampleChips.forEach((chip) => {
+  chip.addEventListener("click", () => {
+    const message = EXAMPLE_MESSAGES[chip.dataset.example];
+    if (!message) return;
+    textInput.value = message;
+    clearError();
+    updateCharacterCount();
+    textInput.focus();
+  });
+});
 form.addEventListener("submit", submitAnalysis);
 imageInput.addEventListener("change", () => {
   if (imageInput.files?.[0]) handleImage(imageInput.files[0]);
