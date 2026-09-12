@@ -142,9 +142,13 @@ Resources:
         must:
           - keep POST /analyze proxy integration
           - keep CORS aligned with Lambda responses
+          - default stage throttle stays at 5 req/s with burst 10 for cost protection
         mutable: change-with-constraints
     Properties:
       StageName: $default
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 5
       CorsConfiguration:
         AllowOrigins:
           - '*'
