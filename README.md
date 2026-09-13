@@ -1,6 +1,6 @@
 # ScamBuster
 
-ScamBuster checks suspicious messages and screenshots for patterns associated with scams. It returns a clear verdict, scam-family classification, specific warning signs, and practical next steps. The analysis pipeline supports both text and images through Amazon Bedrock Nova's multimodal interface.
+ScamBuster checks suspicious messages for patterns associated with scams. It returns a clear verdict, scam-family classification, exact matched warning signs, and practical next steps. A deterministic rules engine currently handles live text checks, while the completed Amazon Bedrock Nova integration will add multimodal screenshot analysis after account authorization.
 
 ## Live demo
 
@@ -12,7 +12,8 @@ The site is on interim HTTP hosting. A CloudFront and HTTPS upgrade is pending A
 
 ```text
 User -> S3 website (frontend)
-User -> API Gateway -> Lambda -> Bedrock Nova (multimodal)
+User -> API Gateway -> Lambda -> Rules engine (current text analysis)
+                                  |-> Bedrock Nova (multimodal, pending authorization)
                                   `-> DynamoDB (anonymous metadata)
 ```
 
@@ -20,7 +21,7 @@ The repository also includes the private S3 and CloudFront Origin Access Control
 
 ## Privacy design
 
-Message text, screenshot data, and user identifiers are never written to DynamoDB. After a successful check, the backend stores only anonymous operational metadata such as the verdict, confidence, scam family, red-flag types, language, input kind, timestamp, and demo-mode state.
+Message text, screenshot data, and user identifiers are never written to DynamoDB. After a successful check, the backend stores only anonymous operational metadata such as the verdict, confidence, scam family, red-flag types, language, input kind, engine, timestamp, and demo-mode state.
 
 ## Cost design
 
@@ -46,11 +47,11 @@ python scripts\e2e_test.py --endpoint https://8jk7c14ar6.execute-api.us-east-1.a
 Deployment scripts are safely re-runnable:
 
 ```powershell
-.\scripts\deploy.ps1 -AnalysisMode mock
+.\scripts\deploy.ps1 -AnalysisMode rules
 .\scripts\deploy_frontend.ps1 -Mode s3
 # Use -Mode cloudfront after account verification.
 ```
 
 ## Current status
 
-The live API is intentionally in demo mode while AWS completes account verification for Bedrock and CloudFront. The real Bedrock Nova integration code is complete, including multimodal requests, response validation, model fallback, and clean failure handling; its public interface has been tested end to end using the explicit mock mode. Demo responses are labeled in both the page header and result card so they cannot be mistaken for a live model verdict.
+The live API runs a genuine deterministic rules engine for text messages while AWS completes account verification for Bedrock and CloudFront. Its verdicts are based on transparent scam cues, each reported with the exact matching evidence; image-only submissions clearly explain that screenshot analysis is not yet available. The Bedrock Nova integration code is complete, including multimodal requests, response validation, model fallback, and clean failure handling, and the frontend labels rule-based and explicit demo responses distinctly.
