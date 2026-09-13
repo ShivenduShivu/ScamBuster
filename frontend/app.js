@@ -17,7 +17,9 @@ const EXAMPLE_MESSAGES = Object.freeze({
 });
 
 const form = document.querySelector("#analysis-form");
-const demoModePill = document.querySelector("#demo-mode-pill");
+const enginePill = document.querySelector("#engine-pill");
+const enginePillLabel = document.querySelector("#engine-pill-label");
+const enginePillDetail = document.querySelector("#engine-pill-detail");
 const textInput = document.querySelector("#message-text");
 const exampleChips = document.querySelectorAll(".example-chip");
 const characterCount = document.querySelector("#character-count");
@@ -242,9 +244,28 @@ function createResultSection(title) {
   return section;
 }
 
+function updateEnginePill(result) {
+  enginePill.classList.remove("is-demo");
+  if (result.demo_mode === true) {
+    enginePill.hidden = false;
+    enginePill.classList.add("is-demo");
+    enginePillLabel.textContent = "Demo mode";
+    enginePillDetail.textContent = "Sample output";
+    enginePill.title = "This response is demonstration output.";
+  } else if (result.engine === "rules") {
+    enginePill.hidden = false;
+    enginePillLabel.textContent = "Rule-based engine";
+    enginePillDetail.textContent = "AI screenshot analysis launching soon";
+    enginePill.title = "AI screenshot analysis launching soon";
+  } else {
+    enginePill.hidden = true;
+    enginePill.removeAttribute("title");
+  }
+}
+
 function renderResult(result) {
   const presentation = verdictPresentation(result.verdict);
-  demoModePill.hidden = result.demo_mode !== true;
+  updateEnginePill(result);
   resultCard.className = `result-card ${presentation.theme}`;
   resultContent.replaceChildren();
 

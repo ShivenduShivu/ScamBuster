@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("bedrock", "mock")]
+    [ValidateSet("bedrock", "mock", "rules")]
     [string]$AnalysisMode = "bedrock"
 )
 

@@ -111,16 +111,37 @@ a {
   letter-spacing: 0.02em;
 }
 
-.demo-mode-pill {
-  padding: 0.3rem 0.65rem;
-  border: 1px solid #e3c878;
+.engine-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #9dd7cf;
   border-radius: 999px;
-  background: var(--warning-soft);
-  color: #684000;
+  background: #effbf9;
+  color: #175e56;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.engine-pill[hidden] {
+  display: none;
+}
+
+.engine-pill strong {
   font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.engine-pill span {
+  font-size: 0.62rem;
+}
+
+.engine-pill.is-demo {
+  border-color: #e3c878;
+  background: var(--warning-soft);
+  color: #684000;
 }
 
 .hero {

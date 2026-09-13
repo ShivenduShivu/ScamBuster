@@ -131,6 +131,7 @@ def _write_analysis_log(
             "red_flag_types": red_flag_types,
             "message_language": analysis.get("message_language", "unknown"),
             "input_kind": _input_kind(text, image_bytes),
+            "engine": analysis.get("engine", "unknown"),
             "demo_mode": bool(analysis.get("demo_mode", False)),
         }
     )

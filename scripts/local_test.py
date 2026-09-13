@@ -2,14 +2,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from botocore.exceptions import ClientError
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BACKEND_DIR = PROJECT_ROOT / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
 
-from analyzer import AnalysisError, analyze_message
+from rules_engine import analyze_rules
 
 
 CASES = [
@@ -48,6 +46,27 @@ CASES = [
         "text": "Hey, running 10 min late, order the coffee",
         "expected": {"likely_legitimate"},
     },
+    {
+        "name": "Hinglish task scam",
+        "text": (
+            "Work from home: har task par Rs 500 kamao. Registration shulk Rs "
+            "1200 abhi bhugtan karo aur Telegram HR ko jaldi message karo."
+        ),
+        "expected": {"scam", "likely_scam"},
+    },
+    {
+        "name": "Legitimate Amazon order",
+        "text": (
+            "Your Amazon.in order has been confirmed and will arrive Tuesday. "
+            "Track it at https://www.amazon.in/gp/your-account/order-history"
+        ),
+        "expected": {"likely_legitimate"},
+    },
+    {
+        "name": "Empty-ish input",
+        "text": "...",
+        "expected": {"insufficient_content"},
+    },
 ]
 
 
@@ -60,35 +79,29 @@ def _image_format(path: Path) -> str:
 
 
 def _print_analysis(name: str, analysis: dict) -> None:
-    print(f"\n{name}")
-    print(f"Verdict: {analysis['verdict']}")
-    print(f"Confidence: {analysis['confidence']}")
-    print(f"Family: {analysis['scam_family']} ({analysis['scam_family_label']})")
-    print(f"Headline: {analysis['headline']}")
-    print("Red flags:")
-    for red_flag in analysis.get("red_flags", []):
-        print(
-            f"- {red_flag.get('type', 'unknown')}: "
-            f"{red_flag.get('evidence', '')} - {red_flag.get('explanation', '')}"
-        )
-    if not analysis.get("red_flags"):
-        print("- None")
-    print("Actions:")
-    for action in analysis.get("what_to_do", []):
-        print(f"- {action}")
+    print(f"{name}: {analysis['verdict']} ({analysis['confidence']}%) - {analysis['scam_family']}")
+
+
+def _evidence_is_exact(text: str, analysis: dict) -> bool:
+    return all(red_flag.get("evidence", "") in text for red_flag in analysis["red_flags"])
 
 
 def _run_built_in_cases() -> bool:
     passed = 0
     for case in CASES:
-        analysis = analyze_message(case["text"], None, None)
+        analysis = analyze_rules(case["text"])
         _print_analysis(case["name"], analysis)
-        case_passed = analysis["verdict"] in case["expected"]
-        print(f"Expected verdict check: {'PASS' if case_passed else 'FAIL'}")
+        case_passed = (
+            analysis["verdict"] in case["expected"]
+            and analysis["engine"] == "rules"
+            and analysis["demo_mode"] is False
+            and _evidence_is_exact(case["text"], analysis)
+        )
+        print(f"  verdict, engine, and exact-evidence checks: {'PASS' if case_passed else 'FAIL'}")
         passed += int(case_passed)
 
     all_passed = passed == len(CASES)
-    print(f"\nSUMMARY: {'PASS' if all_passed else 'FAIL'} ({passed}/{len(CASES)})")
+    print(f"RULES SUMMARY: {'PASS' if all_passed else 'FAIL'} ({passed}/{len(CASES)})")
     return all_passed
 
 
@@ -99,12 +112,12 @@ def _run_ad_hoc(text: str | None, image_path: str | None) -> None:
         path = Path(image_path)
         image_bytes = path.read_bytes()
         image_format = _image_format(path)
-    analysis = analyze_message(text, image_bytes, image_format)
+    analysis = analyze_rules(text, image_bytes, image_format)
     _print_analysis("Ad-hoc analysis", analysis)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run ScamBuster analysis locally.")
+    parser = argparse.ArgumentParser(description="Run the rule-based analyzer locally.")
     parser.add_argument("--text", help="Message text to analyze.")
     parser.add_argument("--image", help="Path to a PNG, JPEG, or WebP screenshot.")
     args = parser.parse_args()
@@ -114,16 +127,7 @@ def main() -> int:
             _run_ad_hoc(args.text, args.image)
             return 0
         return 0 if _run_built_in_cases() else 1
-    except ClientError as error:
-        details = error.response.get("Error", {})
-        code = details.get("Code", "")
-        message = details.get("Message", "")
-        if code == "AccessDeniedException" and "verified" in message.lower():
-            print(f"PENDING_VERIFICATION: {message}")
-            return 2
-        print(f"Bedrock error: {code}: {message}", file=sys.stderr)
-        return 1
-    except (AnalysisError, OSError, ValueError) as error:
+    except (OSError, ValueError) as error:
         print(f"Test error: {error}", file=sys.stderr)
         return 1
 

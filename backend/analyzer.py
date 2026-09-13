@@ -8,6 +8,7 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from prompts import ANALYSIS_SYSTEM_PROMPT
+from rules_engine import analyze_rules
 
 
 REGION = "us-east-1"
@@ -71,6 +72,7 @@ def _mock_analysis() -> dict[str, Any]:
             "The sender wants to steal payment details or collect a fraudulent fee."
         ),
         "message_language": "English",
+        "engine": "mock",
         "demo_mode": True,
     }
 
@@ -146,14 +148,18 @@ def analyze_message(
     image_bytes: bytes | None,
     image_format: str | None,
 ) -> dict:
-    if ANALYSIS_MODE not in {"bedrock", "mock"}:
-        raise AnalysisError("ANALYSIS_MODE must be either 'bedrock' or 'mock'.")
+    if ANALYSIS_MODE not in {"bedrock", "mock", "rules"}:
+        raise AnalysisError(
+            "ANALYSIS_MODE must be 'bedrock', 'mock', or 'rules'."
+        )
     if not text and image_bytes is None:
         raise AnalysisError("Text or image content is required for analysis.")
     if image_bytes is not None and not image_format:
         raise AnalysisError("An image format is required when image bytes are supplied.")
     if ANALYSIS_MODE == "mock":
         return _mock_analysis()
+    if ANALYSIS_MODE == "rules":
+        return analyze_rules(text, image_bytes, image_format)
 
     content: list[dict[str, Any]] = []
     if text:
@@ -181,5 +187,6 @@ def analyze_message(
             ) from error
 
     validated = _validate_analysis(analysis)
+    validated["engine"] = "bedrock"
     validated["demo_mode"] = False
     return validated

@@ -17,6 +17,7 @@ EXPECTED_ANALYSIS_KEYS = {
     "what_to_do",
     "what_scammer_wants",
     "message_language",
+    "engine",
     "demo_mode",
     "check_id",
 }
@@ -66,10 +67,11 @@ def main() -> int:
     analysis = json.loads(response_body)
     schema_passed = (
         status == 200
-        and analysis.get("demo_mode") is True
+        and analysis.get("engine") == "rules"
+        and analysis.get("demo_mode") is False
         and EXPECTED_ANALYSIS_KEYS.issubset(analysis)
     )
-    results.append(("200 schema+demo_mode", schema_passed))
+    results.append(("200 schema+rules engine", schema_passed))
 
     status, _, _ = _request(url, "POST", {})
     results.append(("400 empty", status == 400))
@@ -106,9 +108,14 @@ def main() -> int:
         "red_flag_types",
         "message_language",
         "input_kind",
+        "engine",
         "demo_mode",
     }
-    dynamodb_passed = item is not None and set(item) == stored_fields
+    dynamodb_passed = (
+        item is not None
+        and set(item) == stored_fields
+        and item.get("engine") == "rules"
+    )
     results.append(("DynamoDB item verified", dynamodb_passed))
 
     for name, passed in results:

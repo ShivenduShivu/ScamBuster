@@ -23,7 +23,8 @@ Parameters:
     AllowedValues:
       - bedrock
       - mock
-    Description: Selects live Bedrock analysis or deterministic demo responses.
+      - rules
+    Description: Selects Bedrock, deterministic demo, or rule-based analysis.
   BedrockModelId:
     Type: String
     Default: amazon.nova-2-lite-v1:0
@@ -107,7 +108,7 @@ Resources:
       - FunctionLogGroup
     Metadata:
       'com.aws.cloudformation.Context':
-        why: validates synchronous browser requests and runs scam analysis; mock mode keeps demos live during model authorization
+        why: validates synchronous browser requests and runs scam analysis; rules mode provides real text verdicts during model authorization
         must:
           - timeout <= HTTP API 30s integration limit
           - mock mode never activates as an error fallback
